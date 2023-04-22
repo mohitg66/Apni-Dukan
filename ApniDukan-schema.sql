@@ -19,11 +19,11 @@ CREATE TABLE Category (
 
 CREATE TABLE Product (
     product_ID INT,
-    product_name VARCHAR(30),
+    product_name VARCHAR(50),
     product_price FLOAT,
     product_description VARCHAR(100),
     product_brand VARCHAR(30),
-    product_image VARCHAR(30),
+    product_image VARCHAR(50),
     product_rating FLOAT,
     product_available_quantity INT,
     admin_ID INT,
@@ -54,8 +54,8 @@ CREATE TABLE Cart_contents (
         ON DELETE CASCADE,
     FOREIGN KEY (product_ID)
         REFERENCES Product (product_ID)
-        ON DELETE CASCADE,
-    UNIQUE INDEX unique_carts (cart_ID)
+        ON DELETE CASCADE
+    -- UNIQUE INDEX unique_carts (cart_ID)
 );
 
 CREATE TABLE Customer (
@@ -64,6 +64,7 @@ CREATE TABLE Customer (
     customer_lname VARCHAR(30),
     customer_email VARCHAR(30),
     customer_password VARCHAR(30),
+    customer_balance INT,
     customer_dob DATE,
     customer_address_house_no VARCHAR(30),
     customer_address_city VARCHAR(30),
@@ -138,8 +139,7 @@ CREATE TABLE Delivery (
     PRIMARY KEY (delivery_ID),
     FOREIGN KEY (order_ID)
         REFERENCES Orders (order_ID)
-        ON DELETE CASCADE,
+        ON DELETE CASCADE
     -- UNIQUE INDEX unique_orders (order_ID)
 );
-
 

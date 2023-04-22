@@ -40,3 +40,13 @@ BEGIN
     END IF;
 END;//
 
+
+-- add a record into cart when a customer record is inserted, also set cart_Id = customer_ID
+DROP TRIGGER IF EXISTS add_cart;
+delimiter //
+CREATE TRIGGER add_cart
+AFTER INSERT ON customer
+FOR EACH ROW
+BEGIN
+    INSERT INTO cart (cart_ID, customer_ID) VALUES (NEW.customer_ID, NEW.customer_ID);
+END;//
