@@ -1,5 +1,5 @@
 # Apni Dukan
-Apni Dukan is an online e-commerce retail store where users can browse and purchase products from various categories such as electronics, clothing, and household items. This project was developed as part of a DBMS course.
+**Apni Dukan** is an online e-commerce retail store where users can browse and purchase products from various categories such as electronics, clothing, and household items. This project was developed as part of a DBMS course.
 
 ## Tech Stack
 <img src="https://www.mysql.com/common/logos/logo-mysql-170x115.png" height="60px" /> <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="60px"> <img src="https://seeklogo.com/images/S/streamlit-logo-1A3B208AE4-seeklogo.com.png" height="60px">
