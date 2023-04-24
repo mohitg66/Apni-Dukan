@@ -1,3 +1,5 @@
+import random
+import time
 import streamlit as st
 import pandas as pd
 import mysql.connector
@@ -16,19 +18,64 @@ product_dict = {}
 for row in rows:
     product_dict[row[0]]= row
 
-# st.session_state["customer_id"] = None
-# st.session_state["admin_id"] = None
     
+def customer_orders():
+    """Display customer's previous orders"""
+    st.title("Order History")
+    if 'customer_id' not in st.session_state or st.session_state['customer_id'] is None:
+        st.warning("Please login to view your order history.")
+        return
+    
+    # if 'order_id' not in st.session_state or st.session_state['order_id'] is None:
+    #     st.info("You do not have any previous orders.")
+    #     return
+    
+    customer_id= st.session_state['customer_id']
+    # order_id= st.session_state['order_id']
+    query = f"SELECT O.order_ID, O.order_amount, O.order_date, O.order_status FROM Orders O INNER JOIN Order_contents OC ON O.order_ID = OC.order_ID INNER JOIN Payment P ON O.order_ID=P.order_ID WHERE P.customer_ID = {customer_id}"
+    cursor.execute(query)
+    orders = cursor.fetchall()
+    
+    if not orders:
+        st.info("You do not have any previous orders.")
+        return
+    
+    query = f"SELECT customer_fname, customer_lname FROM Customer WHERE customer_ID = {customer_id}"
+    cursor.execute(query)
+    result = cursor.fetchone()
+    customer_fname, customer_lname = result
+    st.write(f"Previous orders of {customer_fname} {customer_lname}:")
+    
+    column_widths = [max(len(str(order[i])) for order in orders) for i in range(4)]        
+    column_widths = [width + 3 for width in column_widths]        
+    col1, col2, col3, col4 = st.columns(4)
+    col1.markdown("<h5>Order ID</h5>", unsafe_allow_html=True)
+    col2.markdown("<h5>Order Amount</h5>", unsafe_allow_html=True)
+    col3.markdown("<h5>Order Date</h5>", unsafe_allow_html=True)
+    col4.markdown("<h5>Order Status</h5>", unsafe_allow_html=True)
+    for order in orders:
+        col1, col2, col3, col4 = st.columns(4)
+        col1.write('#'+str(order[0]), justify="center", width=column_widths[0])
+        col2.write(str(order[1]), justify="center", width=column_widths[1])
+        col3.write(str(order[2]), justify="center", width=column_widths[2])
+        col4.write(str(order[3]), justify="center", width=column_widths[3])
+
 
 def customer_cart():
     """display customer cart"""
+    st.title("Your Cart")
     
     if 'customer_id' not in st.session_state or st.session_state['customer_id'] is None:
-        st.info("Please login to view your cart.")
+        st.warning("Please login to view your cart.")
         return
-    
     customer_id= st.session_state['customer_id']
-    st.title("Your Cart")
+    
+    query = f"SELECT customer_fname, customer_lname FROM Customer WHERE customer_ID = {customer_id}"
+    cursor.execute(query)
+    result = cursor.fetchone()
+    customer_fname, customer_lname = result
+    st.write(f"Cart of {customer_fname} {customer_lname}:")
+    
     query = """SELECT Product.product_name, Cart_contents.product_quantity, Product.product_price, Cart_contents.product_ID
                FROM Cart_contents 
                INNER JOIN Product ON Cart_contents.product_ID = Product.product_ID 
@@ -36,8 +83,9 @@ def customer_cart():
                     (SELECT cart_ID FROM Customer WHERE customer_ID = %s)"""
     cursor.execute(query, (customer_id,))
     results = cursor.fetchall()
+    
     if not results:
-        st.write("Your cart is empty.")
+        st.info("Your cart is empty.")
     else:
         total = 0
         st.divider()
@@ -67,9 +115,43 @@ def customer_cart():
         st.divider()
         
         col1, col2 = st.columns([5, 1])
-        # if col1.button("Checkout", key="checkout"):
-        #     st.success("Checkout successful!")
-        if col2.button("Clear cart", key="clear"):
+        if col1.button("Checkout", key="checkout"):
+            order_id= random.randint(100000, 999999)
+            
+            query= "SELECT order_ID FROM Orders"
+            cursor.execute(query)
+            results = cursor.fetchall()
+            while order_id in results:
+                order_id= random.randint(100000, 999999)
+                cursor.execute(query)
+                results = cursor.fetchall()
+            
+            query= f"INSERT INTO Orders (order_ID, order_amount, order_date, order_status) VALUES ({order_id}, {total}, CURDATE(), 'Pending');"
+            cursor.execute(query)
+            st.session_state['order_id']= order_id
+                        
+            query= f"INSERT INTO Order_contents (order_ID, product_ID, product_quantity) SELECT {order_id}, product_ID, product_quantity FROM Cart_contents WHERE cart_ID = {customer_id};"
+            cursor.execute(query)
+            
+            payment_id= random.randint(100000, 999999)
+            query= "SELECT payment_ID FROM Payment"
+            cursor.execute(query)
+            results = cursor.fetchall()
+            while payment_id in results:
+                payment_id= random.randint(100000, 999999)
+                cursor.execute(query)
+                results = cursor.fetchall()
+            
+            query= f"INSERT INTO Payment (order_ID, customer_ID, payment_ID, payment_amount, payment_date, payment_status) VALUES ({order_id}, {customer_id}, {payment_id}, {total}, CURDATE(), 'Completed');"
+            cursor.execute(query)
+                                   
+            query = f"DELETE FROM Cart_contents WHERE cart_ID = (SELECT cart_ID FROM Customer WHERE customer_ID = {customer_id})"
+            cursor.execute(query)
+
+            st.success("Checkout successful!")
+            cnx.commit()
+            
+        elif col2.button("Clear cart", key="clear"):
             query = """DELETE FROM Cart_contents 
                        WHERE cart_ID = 
                             (SELECT cart_ID FROM Customer WHERE customer_ID = %s)"""
@@ -78,11 +160,137 @@ def customer_cart():
             st.success("Cart cleared!")
             st.experimental_rerun()
 
+
+def customer_home():
+    """customer home page"""
+    
+    st.title("Home Page (Customer)")
+    
+    if 'customer_id' not in st.session_state or st.session_state['customer_id'] is None:
+        st.warning("Please login to view the home page.")
+        return
+    
+    cart_id= st.session_state['customer_id']
+    
+    query= f"SELECT customer_fname, customer_lname FROM Customer WHERE customer_ID = {st.session_state['customer_id']};"
+    cursor.execute(query)
+    results = cursor.fetchone()
+    
+    st.write(f"Welcome, {results[0]} {results[1]}!")
+    
+    # Get the current contents of the cart
+    query= f"SELECT product_id, product_quantity FROM Cart_contents WHERE cart_id = {cart_id};"
+    cursor.execute(query)
+    cart_contents = cursor.fetchall()
+    if cart_contents:
+        cart_dict = {product[0]: product[1] for product in cart_contents}
+    else:
+        cart_dict = {}
+        
+    
+    # search bar and button
+    products = []
+    col1, col2 = st.columns([5, 1], gap="large")
+    search_term = col1.text_input("Enter a product name:", label_visibility="collapsed", placeholder="Search for a product", key="search_term")
+    if col2.button("Search"):
+        products = []
+        for product in product_dict.values():
+            if search_term.lower() in str(product[1]).lower():
+                products.append(product)
+    else:
+        for product in product_dict.values():
+            products.append(product)
+            
+    # Display the products
+    st.divider()
+    if not products:
+        st.error("No products found")
+    else:
+        for product in products:
+            col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+            col1.write(product[1])
+            col2.write(f"Rs {product[2]:.2f}")
+
+            # Display the quantity input and "Add to cart" button
+            quantity = col3.number_input("Quantity", min_value=0, value=0, step=1, key=f"quantity_{product[0]}", label_visibility="collapsed")
+            if col4.button("Add to cart", key=f"add_{product[0]}"):
+                # If the "Add to cart" button is clicked, update the cart in the database
+                if cart_dict and product[0] in cart_dict:
+                    new_quantity = cart_dict[product[0]] + quantity
+                    query = f"UPDATE Cart_contents SET product_quantity = {new_quantity} WHERE cart_id = {cart_id} AND product_id = {product[0]};"
+                else:
+                    query = f"INSERT INTO Cart_contents VALUES ({cart_id}, {product[0]}, {quantity});"
+                    cursor.execute(query)
+                    cart_dict[product[0]] = quantity
+                    cnx.commit()
+                st.success(f"{quantity} {product[1]} added to cart.")
+            st.divider()
+
+
+def customer_login():
+    """customer login"""
+    st.title("Customer Login")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    if st.button("Login as customer"):
+        query = f"SELECT * FROM Customer WHERE customer_email = '{email}' AND customer_password = '{password}';"
+        cursor.execute(query)
+        customer = cursor.fetchone()
+        if customer:
+            msg = f"Welcome back {customer[1]} {customer[2]}! (logged in as customer)"
+            # call the customer_home function with the customer_id and product_dict parameters
+            st.session_state["customer_id"] = customer[0]
+            query= f"INSERT IGNORE INTO Cart (cart_id, cart_amount) VALUES ({customer[0]}, 0);"
+            cursor.execute(query)
+            query= f"UPDATE Customer SET cart_id = {customer[0]} WHERE customer_id = {customer[0]};"
+            cursor.execute(query)
+            cnx.commit()
+            st.success(msg)
+        else:
+            st.error("Invalid email or password. Please try again.")
+
+
+def customer_signup():
+    """customer signup"""
+    st.title("Customer Signup")
+    
+    customer_id = random.randint(100000, 999999)
+    query = "SELECT customer_ID FROM Customer"
+    cursor.execute(query)
+    results = cursor.fetchall()
+    while customer_id in results:
+        customer_id = random.randint(100000, 999999)
+        cursor.execute(query)
+        results = cursor.fetchall()
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        customer_fname = st.text_input("First Name")
+    with col2:
+        customer_lname = st.text_input("Last Name")
+    customer_email = st.text_input("Email")
+    customer_password = st.text_input("Password", type="password")
+    customer_dob = st.date_input("Date of Birth")
+    customer_address_house_no = st.text_input("House Number")
+    customer_address_city = st.text_input("City")
+    customer_address_state = st.text_input("State")
+    customer_address_pincode = st.text_input("Pincode")
+
+    if st.button("Sign Up"):
+        query = f"INSERT INTO Customer (customer_ID, customer_fname, customer_lname, customer_email, customer_password, customer_dob, customer_address_house_no, customer_address_city, customer_address_state, customer_address_pincode) VALUES ({customer_id}, '{customer_fname}', '{customer_lname}', '{customer_email}', '{customer_password}', '{customer_dob}', '{customer_address_house_no}', '{customer_address_city}', '{customer_address_state}', '{customer_address_pincode}');"
+        try:
+            cursor.execute(query)
+            cnx.commit()
+            st.session_state["customer_id"] = customer_id
+            st.success(f"Signed up as customer successfully! Welcome {customer_fname} {customer_lname}!")
+        except mysql.connector.IntegrityError as id_duplicate_error:
+            st.error("ID already exists. Please try again with a different ID.")
+
+
 def admin_home():
     """admin home page"""
-    
     if 'admin_id' not in st.session_state or st.session_state['admin_id'] is None:
-        st.info("Please login to view this page.")
+        st.warning("Please login to view this page.")
         return
     
     st.title("Home Page (Admin)")
@@ -239,137 +447,6 @@ def admin_home():
                 with col1: st.table(results)
                 cnx.commit()
         st.divider()    
-    
-    
-
-def customer_home():
-    """customer home page"""
-    # st.session_state
-    if 'customer_id' not in st.session_state or st.session_state['customer_id'] is None:
-        st.info("Please login to view the home page.")
-        return
-    
-    cart_id= st.session_state['customer_id']
-    
-    st.title("Home Page (Customer)")
-    
-    # Get the current contents of the cart
-    query= f"SELECT product_id, product_quantity FROM Cart_contents WHERE cart_id = {cart_id};"
-    cursor.execute(query)
-    cart_contents = cursor.fetchall()
-    if cart_contents:
-        cart_dict = {product[0]: product[1] for product in cart_contents}
-    else:
-        cart_dict = {}
-        
-    
-    # search bar and button
-    products = []
-    col1, col2 = st.columns([5, 1], gap="large")
-    search_term = col1.text_input("Enter a product name:", label_visibility="collapsed", placeholder="Search for a product")
-    if col2.button("Search"):
-        products = []
-        for product in product_dict.values():
-            if search_term.lower() in str(product[1]).lower():
-                products.append(product)
-    else:
-        for product in product_dict.values():
-            products.append(product)
-            
-    # Display the products
-    st.divider()
-    if not products:
-        st.error("No products found")
-    else:
-        for product in products:
-            col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
-            col1.write(product[1])
-            col2.write(f"Rs {product[2]:.2f}")
-
-            # Display the quantity input and "Add to cart" button
-            quantity = col3.number_input("Quantity", min_value=0, value=0, step=1, key=f"quantity_{product[0]}", label_visibility="collapsed")
-            if col4.button("Add to cart", key=f"add_{product[0]}"):
-                # If the "Add to cart" button is clicked, update the cart in the database
-                if cart_dict and product[0] in cart_dict:
-                    new_quantity = cart_dict[product[0]] + quantity
-                    query = f"UPDATE Cart_contents SET product_quantity = {new_quantity} WHERE cart_id = {cart_id} AND product_id = {product[0]};"
-                else:
-                    query = f"INSERT INTO Cart_contents VALUES ({cart_id}, {product[0]}, {quantity});"
-                    cursor.execute(query)
-                    cart_dict[product[0]] = quantity
-                    cnx.commit()
-                st.success(f"{quantity} {product[1]} added to cart.")
-            st.divider()
-
-
-# def customer_home(customer_id):
-#     """customer home page"""
-#     cursor.execute(f"SELECT cart_id FROM Customer WHERE customer_id = {customer_id};")
-#     cart_id = cursor.fetchone()[0]
-    
-#     st.title("Home Page (Customer)")
-    
-#     # create a column layout for search bar and button
-#     col1, col2 = st.columns([3, 1])
-    
-#     # create search bar in first column
-#     search_term = col1.text_input("Enter a product name:")
-    
-#     # create search button in second column
-#     search_button = col2.button("Search")
-    
-#     # create empty list to store products
-#     products = []
-    
-#     # if search button is clicked, filter the products based on search term
-#     if search_button:
-#         for product in product_dict.values():
-#             if search_term.lower() in str(product[1]).lower():
-#                 products.append(product)
-                
-#         if not products:
-#             st.write(f"Sorry, {search_term} is not available.")
-    
-#     # if search button is not clicked, show all the products
-#     else:
-#         products = list(product_dict.values())
-    
-#     # show the products
-#     for product in products:
-#         col1, col2, col3 = st.columns([2, 2, 1])
-#         col1.write(product[1])
-#         col2.write(f"Rs {product[2]:.2f}")
-#         add_to_cart_button = col3.button("Add to cart", key=product[0])
-        
-#         # if add to cart button is clicked, insert the product into cart and show success message
-#         if add_to_cart_button:
-#             query = f"INSERT INTO Cart_contents VALUES ({cart_id}, {product[0]}, 1);"
-#             cursor.execute(query)
-#             st.success(f"{product[1]} added to cart.")
-
-
-
-def customer_login():
-    """customer login"""
-    st.title("Customer Login")
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-    if st.button("Login as customer"):
-        query = f"SELECT * FROM Customer WHERE customer_email = '{email}' AND customer_password = '{password}';"
-        cursor.execute(query)
-        customer = cursor.fetchone()
-        if customer:
-            msg = f"Welcome back {customer[1]} {customer[2]}! (logged in as customer)"
-            # call the customer_home function with the customer_id and product_dict parameters
-            st.session_state["customer_id"] = customer[0]
-            query= f"INSERT IGNORE INTO Cart (cart_id, cart_amount) VALUES ({customer[0]}, 0);"
-            cursor.execute(query)
-            query= f"UPDATE Customer SET cart_id = {customer[0]} WHERE customer_id = {customer[0]};"
-            cursor.execute(query)
-            cnx.commit()
-            st.success(msg)
-        else:
-            st.error("Invalid email or password. Please try again.")
 
 
 def admin_login():
@@ -389,7 +466,7 @@ def admin_login():
 
 def main():
     st.set_page_config(page_title="Apni Dukan", page_icon=":moneybag:")
-    menu = ["Customer Login", "Admin Login", "Admin Home", "Customer Home", "Cart"]
+    menu = ["Admin Login", "Admin Home", "Customer Signup" , "Customer Login",  "Customer Home", "Cart", "Orders"]
     choice = st.sidebar.selectbox("Select a page", menu)
 
     if choice == "Admin Login":
@@ -398,14 +475,23 @@ def main():
     elif choice == "Admin Home":
         admin_home()
     
+    elif choice == "Customer Signup":
+        customer_signup()
+    
     elif choice == "Customer Login":
         customer_login()
-
-    elif choice == "Cart":
-        customer_cart()
+        
+    elif choice == "Customer Sign Up":
+        customer_signup()
 
     elif choice == "Customer Home":
         customer_home()
+        
+    elif choice == "Cart":
+        customer_cart()
+    
+    elif choice == "Orders":
+        customer_orders()
 
 if __name__ == "__main__":
     main()
