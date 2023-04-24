@@ -4,7 +4,6 @@ Apni Dukan is an online e-commerce retail store where users can browse and purch
 ## Tech Stack
 <img src="https://www.mysql.com/common/logos/logo-mysql-170x115.png" height="60px" /> <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="60px"> <img src="https://seeklogo.com/images/S/streamlit-logo-1A3B208AE4-seeklogo.com.png" height="60px">
 
-
 ## Features
 - **User authentication**: Users can create an account and log in to access the site's features
 - **Admin functionalities**: Admins can create an account and log in to access the site's admin features
@@ -41,6 +40,5 @@ Apni Dukan is an online e-commerce retail store where users can browse and purch
 
 
 ## Authors
-
 - **Mohit Gupta**
 - **Kartikye Prasad**
