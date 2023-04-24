@@ -466,7 +466,7 @@ def admin_login():
 
 def main():
     st.set_page_config(page_title="Apni Dukan", page_icon=":moneybag:")
-    menu = ["Admin Login", "Admin Home", "Customer Signup" , "Customer Login",  "Customer Home", "Cart", "Orders"]
+    menu = ["Customer Login", "Customer Signup" , "Admin Login", "Admin Home", "Customer Home", "Cart", "Orders"]
     choice = st.sidebar.selectbox("Select a page", menu)
 
     if choice == "Admin Login":

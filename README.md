@@ -1,14 +1,46 @@
-### System Flow
-Overall flow of the database system is as follows- there are a lot of customers in the database. There are many products in the database which are managed by admins. Each customer has a cart which can have some products or none. When a customer makes payment, an order is placed, and an order_id is generated. Then a delivery_ID is generated and a delivery is initiated for the order which is tracked by the system.
+# Apni Dukan
+Apni Dukan is an online e-commerce retail store where users can browse and purchase products from various categories such as electronics, clothing, and household items. This project was developed as part of a DBMS course.
 
-### ER model
+## Tech Stack
+<img src="https://www.mysql.com/common/logos/logo-mysql-170x115.png" height="60px" /> <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="60px"> <img src="https://seeklogo.com/images/S/streamlit-logo-1A3B208AE4-seeklogo.com.png" height="60px">
+
+
+## Features
+- **User authentication**: Users can create an account and log in to access the site's features
+- **Admin functionalities**: Admins can create an account and log in to access the site's admin features
+- **Product browsing**: Users can browse products by category or search for specific items using keywords
+- **Cart management**: Users can add items to their shopping cart, view their cart, and remove items from their cart
+- **Checkout**: Users can complete their purchase by entering their shipping and billing information
+- **Order history**: Users can view their past orders and track their current order status
+
+## ER model
 <img src="ER diagram.svg" alt="ER diagram" width=""/>
 
-### Relational Model
+## Relational Model
 <img src="Relational model.svg" alt="ER diagram" width=""/>
 
-### Database Schema
-The file ‘ApniDukan-schema’ contains the sql code for the database schema. For creating the database schema, first, we drop the database (ApniDukan) if there exists any, and then we create a new database. Then we use the database, and create all the required relations in the database, following the relational model, along with the sufficient required constraints such as primary key and foreign key, using the CREATE command of sql.
+## Instructions
+- Clone the repository
 
-### Data Population
-The file ‘ApniDukan-data’ contains the sql code insertion of data into our database. For populating the database with data, we took help of an online bulk data generator, filldb, to get bulk random data according to all the relations and corresponding attributes. Then we inserted that data into the relations using INSERT command.
+    ```
+    git clone https://github.com/mohitg66/Apni-Dukan.git
+    cd apni-dukan
+    ```
+- Install MySQL if not installed already
+- Import the database using the SQL scripts in root directory
+- Install dependencies    
+    ``` 
+    pip install streamlit
+    ```
+- Run the app
+    ```
+    cd UI
+    streamlit run main.py
+    ```
+- Navigate to http://localhost:8501 in your web browser to access the site
+
+
+## Authors
+
+- **Mohit Gupta**
+- **Kartikye Prasad**
