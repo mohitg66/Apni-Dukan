@@ -2,7 +2,10 @@
 **Apni Dukan** is an online e-commerce retail store where users can browse and purchase products from various categories such as electronics, clothing, and household items. This project was developed as part of a DBMS course.
 
 ## Tech Stack
-<img src="https://www.mysql.com/common/logos/logo-mysql-170x115.png" height="60px" /> <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="60px"> <img src="https://seeklogo.com/images/S/streamlit-logo-1A3B208AE4-seeklogo.com.png" height="60px">
+
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
 
 ## Features
 - **User authentication**: Users can create an account and log in to access the site's features
